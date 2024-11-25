@@ -28,7 +28,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   height: 300, // 동일하게 크기 조정
                   decoration: BoxDecoration(
                     shape: BoxShape.circle, // 원형 이미지
-                    image: DecorationImage(
+                    image: const DecorationImage(
                       image: AssetImage('assets/logo.png'),
                       fit: BoxFit.cover, // 이미지가 컨테이너를 채우도록 조정
                     ),
@@ -58,6 +58,33 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
                 const SizedBox(height: 20), // 선택 버튼과 입력 필드 간 간격
+
+                // 이름 입력 필드
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: "Name",
+                    labelStyle: const TextStyle(color: Colors.black54),
+                    border: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.black),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20), // 입력 필드 간격
+
+                // 전화번호 입력 필드
+                TextField(
+                  keyboardType: TextInputType.phone, // 전화번호 키보드 설정
+                  decoration: InputDecoration(
+                    labelText: "Phone Number",
+                    labelStyle: const TextStyle(color: Colors.black54),
+                    border: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.black),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20), // 입력 필드 간격
 
                 // E-mail (ID) 입력 필드
                 TextField(

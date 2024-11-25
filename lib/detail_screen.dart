@@ -3,7 +3,7 @@ import 'heart_graph.dart'; // Heart Graph 화면 import
 import 'steps_graph.dart'; // Steps Graph 화면 import
 
 class DetailScreen extends StatelessWidget {
-  final String personName;
+  final String personName; // 사용자 이름을 전달받는 변수
 
   const DetailScreen({Key? key, required this.personName}) : super(key: key);
 
@@ -30,6 +30,7 @@ class DetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 사용자 이름 표시
               Text(
                 personName,
                 style: const TextStyle(
@@ -57,7 +58,8 @@ class DetailScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const HeartGraph(),
+                      builder: (context) =>
+                          HeartGraph(personName: personName), // 이름 전달
                     ),
                   );
                 },
@@ -78,7 +80,8 @@ class DetailScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const StepsGraph(),
+                      builder: (context) =>
+                          StepsGraph(personName: personName), // 이름 전달
                     ),
                   );
                 },
