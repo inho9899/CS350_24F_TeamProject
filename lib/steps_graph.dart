@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'dart:math'; // 랜덤 데이터 생성을 위한 import
 
 class StepsGraph extends StatelessWidget {
   final String personName; // 사용자 이름 전달받기
@@ -8,50 +9,28 @@ class StepsGraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<BarChartGroupData> barGroups = [
-      BarChartGroupData(
-        x: 0,
-        barRods: [
-          BarChartRodData(
-            y: 5000,
-            colors: [Colors.blue],
-            width: 20,
-          ),
-        ],
-      ),
-      BarChartGroupData(
-        x: 1,
-        barRods: [
-          BarChartRodData(
-            y: 7000,
-            colors: [Colors.blue],
-            width: 20,
-          ),
-        ],
-      ),
-      BarChartGroupData(
-        x: 2,
-        barRods: [
-          BarChartRodData(
-            y: 6000,
-            colors: [Colors.blue],
-            width: 20,
-          ),
-        ],
-      ),
-      BarChartGroupData(
-        x: 3,
-        barRods: [
-          BarChartRodData(
-            y: 4000,
-            colors: [Colors.blue],
-            width: 20,
-          ),
-        ],
-      ),
-    ];
+    // 현재 날짜 기준으로 최근 7일 동안의 더미 걸음 수 데이터 생성
+    final List<DateTime> recentDays = List.generate(
+      7,
+          (index) => DateTime.now().subtract(Duration(days: index)),
+    ).reversed.toList(); // 날짜를 최신순으로 정렬
 
-    final List<String> xLabels = ["10/27", "10/28", "10/29", "10/30"];
+    final List<int> stepsData = List.generate(7, (index) => 4000 + Random().nextInt(6000));
+
+    // BarChartGroupData 생성
+    final List<BarChartGroupData> barGroups = List.generate(
+      7,
+          (index) => BarChartGroupData(
+        x: index,
+        barRods: [
+          BarChartRodData(
+            y: stepsData[index].toDouble(),
+            colors: [Colors.blue],
+            width: 20,
+          ),
+        ],
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -95,9 +74,10 @@ class StepsGraph extends StatelessWidget {
                         fontSize: 12,
                       ),
                       getTitles: (value) {
-                        if (value.toInt() >= 0 &&
-                            value.toInt() < xLabels.length) {
-                          return xLabels[value.toInt()]; // X축 제목
+                        // X축: 최근 7일의 날짜 표시
+                        if (value.toInt() >= 0 && value.toInt() < recentDays.length) {
+                          final date = recentDays[value.toInt()];
+                          return "${date.month}/${date.day}"; // MM/DD 형식
                         }
                         return '';
                       },
@@ -113,7 +93,7 @@ class StepsGraph extends StatelessWidget {
                       ),
                       getTitles: (value) {
                         if (value % 2000 == 0) {
-                          return '${value.toInt()}'; // Y축 제목: 2000 단위로 표시
+                          return '${value.toInt()}'; // Y축: 2000 단위로 표시
                         }
                         return '';
                       },
