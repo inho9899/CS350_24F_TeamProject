@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'heart_graph.dart'; // Heart Graph 화면 import
 
 class DetailScreen extends StatelessWidget {
   final String personName;
@@ -49,11 +50,22 @@ class DetailScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // 상태 카드: Heart Rate
-              Card(
-                elevation: 2,
-                child: ListTile(
-                  leading: Image.asset('assets/heart_icon.png', width: 40), // 아이콘
-                  title: const Text("72 BPM"),
+              GestureDetector(
+                onTap: () {
+                  // Heart Graph 화면으로 이동
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HeartGraph(),
+                    ),
+                  );
+                },
+                child: Card(
+                  elevation: 2,
+                  child: ListTile(
+                    leading: Image.asset('assets/heart_icon.png', width: 40), // 아이콘
+                    title: const Text("72 BPM"),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
