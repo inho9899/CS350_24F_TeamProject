@@ -42,9 +42,9 @@ class StepsGraph extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.center, // 그래프를 화면 중앙에 배치
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
@@ -55,7 +55,7 @@ class StepsGraph extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
           Center(
             child: SizedBox(
               height: 300,

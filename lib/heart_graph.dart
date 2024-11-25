@@ -31,9 +31,9 @@ class HeartGraph extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.center, // 화면 중앙에 배치
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20), // 상단 여백
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
@@ -44,7 +44,7 @@ class HeartGraph extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 10), // 제목과 그래프 간 간격
+          const SizedBox(height: 20), // 제목과 그래프 간 간격
           Center(
             child: SizedBox(
               height: 300,
