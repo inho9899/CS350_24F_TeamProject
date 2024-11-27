@@ -3,6 +3,9 @@ import 'package:firebase_messaging/firebase_messaging.dart'; // Firebase Messagi
 import 'package:url_launcher/url_launcher.dart'; // 전화 앱 실행을 위한 import
 import 'user_screen.dart'; // 사용자 화면
 import 'detail_screen.dart'; // 상세정보 화면 (각 사용자 정보)
+import 'low_heart_rate_screen.dart'; // 심박수 관련 화면
+import 'missed_medicine_screen.dart'; // 약 복용 관련 화면
+import 'outdoor_alert_screen.dart'; // 외출 알림 화면
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -78,13 +81,38 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToDetailPage(Map<String, dynamic> data) {
-    final personName = data['personName'] ?? 'Unknown';
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => DetailScreen(personName: personName),
-      ),
-    );
+    final type = data['type']; // 알림 유형
+    final personName = data['personName'] ?? 'Unknown'; // 사용자 이름 기본값
+
+    if (type == 'low_heart_rate') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LowHeartRateScreen(personName: personName),
+        ),
+      );
+    } else if (type == 'missed_medicine') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MissedMedicineScreen(personName: personName),
+        ),
+      );
+    } else if (type == 'outdoor_alert') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OutdoorAlertScreen(personName: personName),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DetailScreen(personName: personName),
+        ),
+      );
+    }
   }
 
   @override
@@ -217,7 +245,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (await canLaunchUrl(telUri)) {
       await launchUrl(telUri);
     } else {
-      // 실행 실패 시 오류 처리
       throw 'Could not launch $telUri';
     }
   }
