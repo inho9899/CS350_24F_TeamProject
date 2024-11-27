@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'login_screen.dart'; // LoginScreen 파일 임포트
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
@@ -126,11 +126,11 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     onPressed: () {
-                      // 회원가입 버튼 클릭 시 HomeScreen으로 이동
+                      // 회원가입 버튼 클릭 시 LoginScreen으로 이동
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const HomeScreen()),
+                            builder: (context) => const LoginScreen()),
                       );
                     },
                     child: const Text(
