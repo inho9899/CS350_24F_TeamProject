@@ -3,6 +3,7 @@ plugins {
     id "kotlin-android"
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services" // Firebase Google Services 플러그인 추가
 }
 
 def localProperties = new Properties()
@@ -38,20 +39,22 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.cs350_24fall_termproject"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
+
+        // FCM 알림과 관련된 기본 설정 추가
+        // Firebase 클라우드 메시징을 지원하기 위한 속성
+        manifestPlaceholders = [
+                firebase_messaging_auto_init_enabled: "true",
+                firebase_analytics_collection_enabled: "true"
+        ]
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
         }
     }
@@ -60,3 +63,6 @@ android {
 flutter {
     source = "../.."
 }
+
+// Firebase 서비스 파일 활성화
+apply plugin: 'com.google.gms.google-services'

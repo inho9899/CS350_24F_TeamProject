@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // 추가된 import
+import 'package:firebase_messaging/firebase_messaging.dart'; // Firebase Messaging import
+import 'package:url_launcher/url_launcher.dart'; // 전화 앱 실행을 위한 import
 import 'user_screen.dart'; // 사용자 화면
 import 'detail_screen.dart'; // 상세정보 화면 (각 사용자 정보)
 
@@ -12,6 +13,79 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 1; // 현재 네비게이션 바 인덱스 (1: HomeScreen)
+
+  @override
+  void initState() {
+    super.initState();
+    setupFCM();
+  }
+
+  void setupFCM() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // 알림 권한 요청 (Android에서는 기본적으로 허용됨)
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    print('알림 권한 상태: ${settings.authorizationStatus}');
+
+    // 포그라운드 알림 처리
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("포그라운드에서 메시지 수신: ${message.notification?.title}");
+      _showAlert(message);
+    });
+
+    // 백그라운드 알림 클릭 처리
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print("백그라운드 알림 클릭: ${message.notification?.title}");
+      _navigateToDetailPage(message.data);
+    });
+
+    // 앱 종료 상태에서 알림 클릭 처리
+    RemoteMessage? initialMessage = await messaging.getInitialMessage();
+    if (initialMessage != null) {
+      print("종료 상태에서 알림 클릭: ${initialMessage.notification?.title}");
+      _navigateToDetailPage(initialMessage.data);
+    }
+  }
+
+  void _showAlert(RemoteMessage message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(message.notification?.title ?? '알림'),
+          content: Text(message.notification?.body ?? '내용 없음'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("닫기"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _navigateToDetailPage(message.data);
+              },
+              child: const Text("열기"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToDetailPage(Map<String, dynamic> data) {
+    final personName = data['personName'] ?? 'Unknown';
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailScreen(personName: personName),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
