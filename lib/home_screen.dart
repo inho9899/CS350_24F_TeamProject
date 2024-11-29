@@ -158,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       Image.asset(
-                        'assets/person_a.jpg', // Person A 이미지
+                        'assets/unknown_profile.png', // Person A 이미지
                         width: 100,
                         height: 100,
                       ),

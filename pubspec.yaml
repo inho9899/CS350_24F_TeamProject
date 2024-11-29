@@ -71,6 +71,7 @@ flutter:
     - assets/heart_icon.png
     - assets/steps_icon.png
     - assets/medicine_icon.png
+    - assets/unknown_profile.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
