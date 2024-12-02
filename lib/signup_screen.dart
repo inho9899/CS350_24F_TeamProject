@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'login_screen.dart'; // LoginScreen 파일 임포트
 
 class SignupScreen extends StatefulWidget {
@@ -10,6 +12,60 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   int selectedIndex = 0; // 선택된 버튼의 인덱스 (0: Caregiver, 1: Elder)
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  Future<void> register() async {
+    final String name = nameController.text.trim();
+    final String phone = phoneController.text.trim();
+    final String email = emailController.text.trim();
+    final String password = passwordController.text.trim();
+    final int elderly = selectedIndex; // Caregiver: 0, Elder: 1
+
+    if (name.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("모든 필드를 입력해주세요.")),
+      );
+      return;
+    }
+
+    final Uri url = Uri.parse('http://121.152.208.156:3000/auth/register');
+    final Map<String, dynamic> body = {
+      "name": name,
+      "email": email,
+      "phone": phone,
+      "password": password,
+      "elderly": elderly,
+    };
+
+    try {
+      final http.Response response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("회원가입이 성공적으로 완료되었습니다.")),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("회원가입 실패: ${response.body}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("오류 발생: $e")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +117,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 // 이름 입력 필드
                 TextField(
+                  controller: nameController,
                   decoration: InputDecoration(
                     labelText: "Name",
                     labelStyle: const TextStyle(color: Colors.black54),
@@ -74,6 +131,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 // 전화번호 입력 필드
                 TextField(
+                  controller: phoneController,
                   keyboardType: TextInputType.phone, // 전화번호 키보드 설정
                   decoration: InputDecoration(
                     labelText: "Phone Number",
@@ -88,6 +146,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 // E-mail (ID) 입력 필드
                 TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
                     labelText: "E-mail ( ID )",
                     labelStyle: const TextStyle(color: Colors.black54),
@@ -101,6 +160,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 // Password 입력 필드
                 TextField(
+                  controller: passwordController,
                   obscureText: true, // 비밀번호 마스킹
                   decoration: InputDecoration(
                     labelText: "Password",
@@ -125,14 +185,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () {
-                      // 회원가입 버튼 클릭 시 LoginScreen으로 이동
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginScreen()),
-                      );
-                    },
+                    onPressed: register, // 회원가입 요청
                     child: const Text(
                       "Sign Up",
                       style: TextStyle(fontSize: 16),

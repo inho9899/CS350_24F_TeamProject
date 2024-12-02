@@ -4,11 +4,19 @@ import 'package:http/http.dart' as http; // HTTP 요청을 위해 패키지 추�
 import 'dart:convert'; // JSON 변환을 위해 필요
 import 'home_screen.dart'; // HomeScreen 파일 임포트
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
-  /*
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
   Future<void> sendTokenToServer(String token) async {
-    final url = Uri.parse('https://your-server-endpoint.com/fcm-token'); // 서버의 엔드포인트 URL
+    final url = Uri.parse('http://121.152.208.156:3000/auth/login'); // 서버의 로그인 API 엔드포인트
     try {
       final response = await http.post(
         url,
@@ -25,25 +33,63 @@ class LoginScreen extends StatelessWidget {
       print('서버 전송 중 에러 발생: $error');
     }
   }
-  */
 
   Future<void> handleLogin(BuildContext context) async {
-    // FCM 토큰 가져오기
-    final fcmToken = await FirebaseMessaging.instance.getToken();
+    final String email = emailController.text.trim();
+    final String password = passwordController.text.trim();
 
-    if (fcmToken != null) {
-      print('FCM 토큰: $fcmToken');
-      // 서버로 FCM 토큰 전송
-      //await sendTokenToServer(fcmToken); /// 나중에 구현을 위해 일단 주석처리
-    } else {
-      print('FCM 토큰을 가져오지 못했습니다.');
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("이메일과 비밀번호를 입력해주세요.")),
+      );
+      return;
     }
 
-    // HomeScreen으로 이동
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
-    );
+    // FCM 토큰 가져오기
+    final String? fcmToken = await FirebaseMessaging.instance.getToken();
+
+    if (fcmToken == null) {
+      print('FCM 토큰을 가져오지 못했습니다.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("푸시 알림을 활성화해주세요.")),
+      );
+      return;
+    }
+
+    final Uri url = Uri.parse('http://121.152.208.156:3000/auth/login');
+    final Map<String, dynamic> body = {
+      "email": email,
+      "password": password,
+      "FCM": fcmToken,
+    };
+
+    try {
+      final http.Response response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final String accessToken = responseData['accessToken'];
+        print('로그인 성공: $accessToken');
+
+        // HomeScreen으로 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("로그인 실패: ${response.body}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("서버 오류 발생: $e")),
+      );
+    }
   }
 
   @override
@@ -63,7 +109,7 @@ class LoginScreen extends StatelessWidget {
                   height: 300, // 동일하게 크기 조정
                   decoration: BoxDecoration(
                     shape: BoxShape.circle, // 원형 이미지
-                    image: DecorationImage(
+                    image: const DecorationImage(
                       image: AssetImage('assets/logo.png'),
                       fit: BoxFit.cover, // 이미지가 컨테이너를 채우도록 조정
                     ),
@@ -73,6 +119,7 @@ class LoginScreen extends StatelessWidget {
 
                 // E-mail (ID) 입력 필드
                 TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
                     labelText: "E-mail ( ID )",
                     labelStyle: const TextStyle(color: Colors.black54),
@@ -86,6 +133,7 @@ class LoginScreen extends StatelessWidget {
 
                 // Password 입력 필드
                 TextField(
+                  controller: passwordController,
                   obscureText: true, // 비밀번호 마스킹
                   decoration: InputDecoration(
                     labelText: "Password",
