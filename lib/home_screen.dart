@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart'; // Firebase Messaging import
 import 'package:url_launcher/url_launcher.dart'; // 전화 앱 실행을 위한 import
 import 'user_screen.dart'; // 사용자 화면
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'detail_screen.dart'; // 상세정보 화면 (각 사용자 정보)
 import 'low_heart_rate_screen.dart'; // 심박수 관련 화면
 import 'missed_medicine_screen.dart'; // 약 복용 관련 화면
@@ -25,11 +27,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 1; // 현재 네비게이션 바 인덱스 (1: HomeScreen)
+  List<Map<String, dynamic>> elderlyList = []; // Elder 정보를 저장
 
   @override
   void initState() {
     super.initState();
     setupFCM();
+    fetchElderlyInfo();
   }
 
   void setupFCM() async {
@@ -61,6 +65,31 @@ class _HomeScreenState extends State<HomeScreen> {
     if (initialMessage != null) {
       print("종료 상태에서 알림 클릭: ${initialMessage.notification?.title}");
       _navigateToDetailPage(initialMessage.data);
+    }
+  }
+
+  Future<void> fetchElderlyInfo() async {
+    final Uri url = Uri.parse('http://121.152.208.156:3000/caregiver/elderlyInfo');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${widget.token}",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        setState(() {
+          elderlyList = List<Map<String, dynamic>>.from(responseData['elderlyInfo']);
+        });
+      } else {
+        print("Failed to fetch elderly info: ${response.body}");
+      }
+    } catch (e) {
+      print("Error fetching elderly info: $e");
     }
   }
 
@@ -115,12 +144,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } else {
-      Navigator.push(
+      /*Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => DetailScreen(personName: personName),
         ),
-      );
+      );*/
     }
   }
 
@@ -162,63 +191,44 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 20),
-              // Person A 정보 카드
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DetailScreen(personName: "Person A"),
-                    ),
-                  );
-                },
-                child: Card(
-                  elevation: 2,
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/unknown_profile.png', // Person A 이미지
-                        width: 100,
-                        height: 100,
-                      ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        "Person A",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
+              const Text(
+                "Elderly List:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 20),
-              // Person B 정보 카드
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DetailScreen(personName: "Person B"),
+              const SizedBox(height: 10),
+              ...elderlyList.map((elder) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetailScreen(
+                          personName: elder['name'],
+                          elderlyID: elder['ID'].toString(),
+                          token: widget.token,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    elevation: 2,
+                    child: Row(
+                      children: [
+                        Image.asset(
+                          'assets/unknown_profile.png', // 기본 이미지
+                          width: 100,
+                          height: 100,
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          elder['name'],
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
-                  );
-                },
-                child: Card(
-                  elevation: 2,
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/person_b.jpg', // Person B 이미지
-                        width: 100,
-                        height: 100,
-                      ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        "Person B",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
                   ),
-                ),
-              ),
+                );
+              }).toList(),
             ],
           ),
         ),
@@ -232,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
           } else if (index == 1) {
             // 현재 페이지 (HomeScreen)
           } else if (index == 2) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => UserScreen(

@@ -1,11 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'heart_graph.dart'; // Heart Graph 화면 import
 import 'steps_graph.dart'; // Steps Graph 화면 import
 
-class DetailScreen extends StatelessWidget {
-  final String personName; // 사용자 이름을 전달받는 변수
+class DetailScreen extends StatefulWidget {
+  final String personName;
+  final String elderlyID;
+  final String token;
 
-  const DetailScreen({Key? key, required this.personName}) : super(key: key);
+  const DetailScreen({
+    Key? key,
+    required this.personName,
+    required this.elderlyID,
+    required this.token,
+  }) : super(key: key);
+
+  @override
+  _DetailScreenState createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  Map<String, dynamic> sensorData = {}; // 센서 데이터를 저장할 변수
+  bool isLoading = true; // 로딩 상태 확인
+
+  @override
+  void initState() {
+    super.initState();
+    fetchSensorData();
+  }
+
+  Future<void> fetchSensorData() async {
+    final Uri url = Uri.parse('http://121.152.208.156:3000/caregiver/sensorAllData');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${widget.token}",
+        },
+        body: jsonEncode({"elderlyID": widget.elderlyID}),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          sensorData = jsonDecode(response.body);
+          isLoading = false;
+        });
+      } else {
+        print("Failed to fetch sensor data: ${response.body}");
+      }
+    } catch (e) {
+      print("Error fetching sensor data: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +73,9 @@ class DetailScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: SingleChildScrollView(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator()) // 로딩 표시
+          : SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -32,21 +83,10 @@ class DetailScreen extends StatelessWidget {
             children: [
               // 사용자 이름 표시
               Text(
-                personName,
+                widget.personName,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // 상태 카드: Not at Home
-              Card(
-                elevation: 2,
-                child: ListTile(
-                  leading: Image.asset('assets/home_icon.png', width: 40), // 아이콘
-                  title: const Text("Not at Home"),
-                  subtitle: const Text("Leave at 14:30"),
                 ),
               ),
               const SizedBox(height: 20),
@@ -58,8 +98,11 @@ class DetailScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          HeartGraph(personName: personName), // 이름 전달
+                      builder: (context) => HeartGraph(
+                        personName: widget.personName,
+                        elderlyID: widget.elderlyID,
+                        token: widget.token,
+                      ),
                     ),
                   );
                 },
@@ -67,7 +110,8 @@ class DetailScreen extends StatelessWidget {
                   elevation: 2,
                   child: ListTile(
                     leading: Image.asset('assets/heart_icon.png', width: 40), // 아이콘
-                    title: const Text("72 BPM"),
+                    title: Text("${sensorData['heartRate']?[1] ?? 'N/A'} BPM"),
+                    subtitle: Text("Last Update: ${sensorData['heartRate']?[0] ?? 'N/A'}"),
                   ),
                 ),
               ),
@@ -80,8 +124,11 @@ class DetailScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          StepsGraph(personName: personName), // 이름 전달
+                      builder: (context) => StepsGraph(
+                        personName: widget.personName,
+                        elderlyID: widget.elderlyID,
+                        token: widget.token,
+                      ),
                     ),
                   );
                 },
@@ -89,7 +136,8 @@ class DetailScreen extends StatelessWidget {
                   elevation: 2,
                   child: ListTile(
                     leading: Image.asset('assets/steps_icon.png', width: 40), // 아이콘
-                    title: const Text("1234 walks"),
+                    title: Text("${sensorData['steps']?[1] ?? 'N/A'} Steps"),
+                    subtitle: Text("Last Update: ${sensorData['steps']?[0] ?? 'N/A'}"),
                   ),
                 ),
               ),
@@ -100,8 +148,8 @@ class DetailScreen extends StatelessWidget {
                 elevation: 2,
                 child: ListTile(
                   leading: Image.asset('assets/medicine_icon.png', width: 40), // 아이콘
-                  title: const Text("Morning : 07:32"),
-                  subtitle: const Text("Afternoon : 12:16"),
+                  title: Text("Morning: ${sensorData['medication']?[0] ?? 'N/A'}"),
+                  subtitle: Text("Afternoon: ${sensorData['medication']?[1] ?? 'N/A'}"),
                 ),
               ),
             ],

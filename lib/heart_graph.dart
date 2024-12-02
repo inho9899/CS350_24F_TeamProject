@@ -1,26 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dart:math';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class HeartGraph extends StatelessWidget {
-  final String personName; // 사람 이름을 전달받기 위한 변수
+class HeartGraph extends StatefulWidget {
+  final String personName;
+  final String elderlyID;
+  final String token;
 
-  const HeartGraph({Key? key, required this.personName}) : super(key: key);
+  const HeartGraph({
+    Key? key,
+    required this.personName,
+    required this.elderlyID,
+    required this.token,
+  }) : super(key: key);
+
+  @override
+  _HeartGraphState createState() => _HeartGraphState();
+}
+
+class _HeartGraphState extends State<HeartGraph> {
+  List<FlSpot> heartRateData = []; // 그래프 데이터
+  bool isLoading = true; // 로딩 상태 확인
+
+  @override
+  void initState() {
+    super.initState();
+    fetchHeartRateData();
+  }
+
+  Future<void> fetchHeartRateData() async {
+    final Uri url = Uri.parse('http://121.152.208.156:3000/caregiver/sensorData');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${widget.token}",
+        },
+        body: jsonEncode({
+          "elderlyID": int.parse(widget.elderlyID), // String -> int 변환
+          "type": "heartRate",
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> times = data['time'] ?? [];
+        final List<dynamic> values = data['heartRate'] ?? [];
+        List<FlSpot> spots = [];
+
+        for (int i = 0; i < times.length; i++) {
+          // x축은 시간차 (분), y축은 심박수
+          final DateTime time = DateTime.parse(times[i]);
+          final double xValue = time.difference(DateTime.now()).inMinutes.toDouble();
+          final double yValue = values[i].toDouble();
+          spots.add(FlSpot(xValue, yValue));
+        }
+
+        setState(() {
+          heartRateData = spots;
+          isLoading = false;
+        });
+      } else {
+        print("Failed to fetch heart rate data: ${response.body}");
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error fetching heart rate data: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 현재 시간 기준으로 1시간 동안의 심박수 데이터 생성
-    final DateTime now = DateTime.now();
-    final List<FlSpot> heartRateData = List.generate(
-      8,
-          (index) {
-        final int minuteOffset = index * 10;
-        final double xValue = (60 - minuteOffset).toDouble();
-        final double yValue = 75 + Random().nextInt(10) - 5; // Y축 심박수 값
-        return FlSpot(xValue, yValue);
-      },
-    ).reversed.toList(); // 데이터를 정렬 (가장 오래된 값이 먼저 나오도록)
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -30,32 +88,43 @@ class HeartGraph extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center, // 화면 중앙에 배치
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : heartRateData.isEmpty
+          ? Center(
+        child: Text(
+          "No heart rate data available.",
+          style: TextStyle(fontSize: 18, color: Colors.grey),
+        ),
+      )
+          : Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              "$personName - Heart Rate",
+              "${widget.personName} - Heart Rate",
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          const SizedBox(height: 20), // 제목과 그래프 간 간격
+          const SizedBox(height: 20),
           Center(
             child: SizedBox(
               height: 300,
               width: 350,
               child: LineChart(
                 LineChartData(
-                  maxY: 100,
-                  minY: 60,
+                  maxY: heartRateData.isEmpty ? 100 : null,
+                  minY: heartRateData.isEmpty ? 60 : null,
                   lineBarsData: [
                     LineChartBarData(
-                      spots: heartRateData,
+                      spots: heartRateData.isEmpty
+                          ? [FlSpot(0, 0)] // const 제거
+                          : heartRateData,
                       isCurved: true,
                       colors: [Colors.red],
                       barWidth: 4,
@@ -74,14 +143,10 @@ class HeartGraph extends StatelessWidget {
                         fontSize: 12,
                       ),
                       getTitles: (value) {
-                        // X축: 10분 단위로만 범례 표시
-                        if (value.toInt() % 10 == 0) {
-                          final int minute = now
-                              .subtract(Duration(minutes: 60 - value.toInt()))
-                              .minute;
-                          return '${minute.toString().padLeft(2, '0')}m';
+                        if (value % 10 == 0) {
+                          return '${value.toInt()}m';
                         }
-                        return ''; // 나머지 값은 범례를 숨김
+                        return '';
                       },
                     ),
                     leftTitles: SideTitles(
@@ -94,8 +159,8 @@ class HeartGraph extends StatelessWidget {
                         fontSize: 12,
                       ),
                       getTitles: (value) {
-                        if (value % 20 == 0) {
-                          return '${value.toInt()} BPM'; // 20 단위로만 표시
+                        if (value % 10 == 0) {
+                          return '${value.toInt()} BPM';
                         }
                         return '';
                       },
@@ -103,7 +168,7 @@ class HeartGraph extends StatelessWidget {
                   ),
                   gridData: FlGridData(
                     show: true,
-                    horizontalInterval: 20, // 수평선 간격
+                    horizontalInterval: 20,
                   ),
                   borderData: FlBorderData(
                     show: true,

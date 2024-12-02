@@ -1,37 +1,100 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dart:math'; // 랜덤 데이터 생성을 위한 import
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class StepsGraph extends StatelessWidget {
-  final String personName; // 사용자 이름 전달받기
+class StepsGraph extends StatefulWidget {
+  final String personName;
+  final String elderlyID;
+  final String token;
 
-  const StepsGraph({Key? key, required this.personName}) : super(key: key);
+  const StepsGraph({
+    Key? key,
+    required this.personName,
+    required this.elderlyID,
+    required this.token,
+  }) : super(key: key);
+
+  @override
+  _StepsGraphState createState() => _StepsGraphState();
+}
+
+class _StepsGraphState extends State<StepsGraph> {
+  List<BarChartGroupData> barGroups = [];
+  List<DateTime> recentDays = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchStepsData();
+  }
+
+  Future<void> fetchStepsData() async {
+    final Uri url = Uri.parse('http://121.152.208.156:3000/caregiver/sensorData');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${widget.token}",
+        },
+        body: jsonEncode({
+          "elderlyID": widget.elderlyID,
+          "type": "walking",
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<String> times = List<String>.from(data['time']);
+        final List<int> values = List<int>.from(data['walk']);
+
+        // 데이터를 최근 날짜 순으로 정렬
+        List<DateTime> days = [];
+        for (String time in times) {
+          days.add(DateTime.parse(time));
+        }
+
+        // 그래프 데이터 생성
+        List<BarChartGroupData> groups = [];
+        for (int i = 0; i < days.length; i++) {
+          groups.add(
+            BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  y: values[i].toDouble(),
+                  colors: [Colors.blue],
+                  width: 20,
+                ),
+              ],
+            ),
+          );
+        }
+
+        setState(() {
+          barGroups = groups;
+          recentDays = days;
+          isLoading = false;
+        });
+      } else {
+        print("Failed to fetch steps data: ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to load data: ${response.body}")),
+        );
+      }
+    } catch (e) {
+      print("Error fetching steps data: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error occurred: $e")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 현재 날짜 기준으로 최근 7일 동안의 더미 걸음 수 데이터 생성
-    final List<DateTime> recentDays = List.generate(
-      7,
-          (index) => DateTime.now().subtract(Duration(days: index)),
-    ).reversed.toList(); // 날짜를 최신순으로 정렬
-
-    final List<int> stepsData = List.generate(7, (index) => 4000 + Random().nextInt(6000));
-
-    // BarChartGroupData 생성
-    final List<BarChartGroupData> barGroups = List.generate(
-      7,
-          (index) => BarChartGroupData(
-        x: index,
-        barRods: [
-          BarChartRodData(
-            y: stepsData[index].toDouble(),
-            colors: [Colors.blue],
-            width: 20,
-          ),
-        ],
-      ),
-    );
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -41,14 +104,16 @@ class StepsGraph extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center, // 그래프를 화면 중앙에 배치
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              "$personName - Steps Data",
+              "${widget.personName} - Steps Data",
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -74,10 +139,9 @@ class StepsGraph extends StatelessWidget {
                         fontSize: 12,
                       ),
                       getTitles: (value) {
-                        // X축: 최근 7일의 날짜 표시
                         if (value.toInt() >= 0 && value.toInt() < recentDays.length) {
                           final date = recentDays[value.toInt()];
-                          return "${date.month}/${date.day}"; // MM/DD 형식
+                          return "${date.month}/${date.day}";
                         }
                         return '';
                       },
@@ -93,7 +157,7 @@ class StepsGraph extends StatelessWidget {
                       ),
                       getTitles: (value) {
                         if (value % 2000 == 0) {
-                          return '${value.toInt()}'; // Y축: 2000 단위로 표시
+                          return '${value.toInt()}';
                         }
                         return '';
                       },
@@ -101,7 +165,7 @@ class StepsGraph extends StatelessWidget {
                   ),
                   gridData: FlGridData(
                     show: true,
-                    horizontalInterval: 2000, // 수평선 간격
+                    horizontalInterval: 2000,
                   ),
                   borderData: FlBorderData(
                     show: true,

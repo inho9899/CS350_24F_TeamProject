@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'home_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class UserScreen extends StatelessWidget {
   final String name;
@@ -15,6 +18,81 @@ class UserScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextEditingController elderController = TextEditingController(); // 입력값 제어
+    final TextEditingController deleteElderController = TextEditingController(); // 삭제용 입력값
+
+    Future<void> registerElder() async {
+      final String email = elderController.text.trim();
+      if (email.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a valid email.")),
+        );
+        return;
+      }
+
+      final Uri url = Uri.parse('http://121.152.208.156:3000/caregiver/elderlyRegister');
+      try {
+        final response = await http.post(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $token",
+          },
+          body: jsonEncode({"email": email}),
+        );
+
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Elder successfully registered.")),
+          );
+          elderController.clear(); // 입력값 초기화
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to register elder: ${response.body}")),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error occurred: $e")),
+        );
+      }
+    }
+
+    Future<void> removeElder() async {
+      final String elderlyID = deleteElderController.text.trim();
+      if (elderlyID.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a valid Elderly ID.")),
+        );
+        return;
+      }
+
+      final Uri url = Uri.parse('http://121.152.208.156:3000/caregiver/elderlyRemove');
+      try {
+        final response = await http.post(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $token",
+          },
+          body: jsonEncode({"elderlyID": elderlyID}),
+        );
+
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Elder successfully removed.")),
+          );
+          deleteElderController.clear(); // 입력값 초기화
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to remove elder: ${response.body}")),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error occurred: $e")),
+        );
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -109,89 +187,54 @@ class UserScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   IconButton(
                     icon: const Icon(Icons.add),
-                    onPressed: () {
-                      // Add Elder 버튼 동작
-                      final String elderName = elderController.text.trim();
-                      if (elderName.isNotEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Elder '$elderName' added!"),
-                          ),
-                        );
-                        elderController.clear(); // 입력값 초기화
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Please enter a valid name."),
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: registerElder, // Add Elder 버튼 동작
                   ),
                 ],
               ),
               const Divider(color: Colors.grey),
 
-              // Delete ID 버튼
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black, // 버튼 배경색
-                    foregroundColor: Colors.white, // 텍스트 색상
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              // Remove Elder 입력창
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: deleteElderController, // 삭제용 입력 컨트롤러
+                      decoration: InputDecoration(
+                        labelText: "Remove Elder ID",
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        border: const OutlineInputBorder(),
+                      ),
                     ),
                   ),
-                  onPressed: () {
-                    // Delete ID 버튼 동작
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Delete ID"),
-                        content: const Text(
-                          "Are you sure you want to delete this ID?",
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context); // 취소
-                            },
-                            child: const Text("Cancel"),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(context); // 삭제 실행 후 닫기
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("ID deleted."),
-                                ),
-                              );
-                            },
-                            child: const Text("Delete"),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    "Delete ID",
-                    style: TextStyle(fontSize: 16),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: removeElder, // Remove Elder 버튼 동작
                   ),
-                ),
+                ],
               ),
             ],
           ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2, // 현재 탭: UserScreen
+        currentIndex: 2, // 현재 UserScreen에 위치
         onTap: (index) {
           if (index == 0) {
-            // 전화 앱으로 이동
+            // 전화 탭
           } else if (index == 1) {
-            Navigator.pop(context); // HomeScreen으로 이동
+            // HomeScreen으로 이동
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomeScreen(
+                  name: name,
+                  elderly: elderly,
+                  token: token,
+                ),
+              ),
+            );
           } else if (index == 2) {
             // 현재 UserScreen
           }
