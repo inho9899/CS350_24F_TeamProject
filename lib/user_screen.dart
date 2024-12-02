@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
 class UserScreen extends StatelessWidget {
-  const UserScreen({Key? key}) : super(key: key);
+  final String name;
+  final bool elderly;
+  final String token;
+
+  const UserScreen({
+    Key? key,
+    required this.name,
+    required this.elderly,
+    required this.token,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -42,16 +51,23 @@ class UserScreen extends StatelessWidget {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              "E-mail (ID)",
-                              style: TextStyle(
+                              "Name: $name",
+                              style: const TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
-                              "Edit information",
-                              style: TextStyle(color: Colors.grey),
+                              "User Type: ${elderly ? 'Elderly' : 'Caregiver'}",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Token: $token",
+                              style: const TextStyle(color: Colors.grey),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),

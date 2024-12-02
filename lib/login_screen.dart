@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'; // FirebaseMessaging import
-import 'package:http/http.dart' as http; // HTTP 요청을 위해 패키지 추가
-import 'dart:convert'; // JSON 변환을 위해 필요
-import 'home_screen.dart'; // HomeScreen 파일 임포트
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -14,25 +14,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  Future<void> sendTokenToServer(String token) async {
-    final url = Uri.parse('http://121.152.208.156:3000/auth/login'); // 서버의 로그인 API 엔드포인트
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'token': token}),
-      );
-
-      if (response.statusCode == 200) {
-        print('토큰이 서버에 성공적으로 전송되었습니다.');
-      } else {
-        print('서버 전송 실패: ${response.statusCode}');
-      }
-    } catch (error) {
-      print('서버 전송 중 에러 발생: $error');
-    }
-  }
 
   Future<void> handleLogin(BuildContext context) async {
     final String email = emailController.text.trim();
@@ -49,7 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final String? fcmToken = await FirebaseMessaging.instance.getToken();
 
     if (fcmToken == null) {
-      print('FCM 토큰을 가져오지 못했습니다.');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("푸시 알림을 활성화해주세요.")),
       );
@@ -73,12 +53,21 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         final String accessToken = responseData['accessToken'];
-        print('로그인 성공: $accessToken');
+        final String name = responseData['name'];
+        final bool elderly = responseData['elderly'] == 1;
 
-        // HomeScreen으로 이동
+        print('로그인 성공: $accessToken, 사용자 이름: $name, 유형: $elderly');
+
+        // HomeScreen으로 이동하며 데이터 전달
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              name: name,
+              elderly: elderly,
+              token: accessToken,
+            ),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -96,8 +85,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: Colors.grey[200], // 배경색 설정
-        padding: const EdgeInsets.symmetric(horizontal: 40), // 양쪽 패딩 추가
+        color: Colors.grey[200],
+        padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Center(
           child: SingleChildScrollView(
             child: Column(
@@ -105,17 +94,17 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 // 로고 이미지
                 Container(
-                  width: 300, // 로고 크기를 줄임
-                  height: 300, // 동일하게 크기 조정
+                  width: 300,
+                  height: 300,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle, // 원형 이미지
+                    shape: BoxShape.circle,
                     image: const DecorationImage(
                       image: AssetImage('assets/logo.png'),
-                      fit: BoxFit.cover, // 이미지가 컨테이너를 채우도록 조정
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                const SizedBox(height: 40), // 로고와 입력 필드 사이 간격
+                const SizedBox(height: 40),
 
                 // E-mail (ID) 입력 필드
                 TextField(
@@ -129,12 +118,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20), // 입력 필드 간격
+                const SizedBox(height: 20),
 
                 // Password 입력 필드
                 TextField(
                   controller: passwordController,
-                  obscureText: true, // 비밀번호 마스킹
+                  obscureText: true,
                   decoration: InputDecoration(
                     labelText: "Password",
                     labelStyle: const TextStyle(color: Colors.black54),
@@ -144,21 +133,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 30), // 입력 필드와 버튼 간격
+                const SizedBox(height: 30),
 
                 // Login 버튼
                 SizedBox(
                   width: double.infinity,
-                  height: 50, // 버튼 높이
+                  height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black, // 버튼 배경색
-                      foregroundColor: Colors.white, // 버튼 텍스트 색상
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () => handleLogin(context), // 로그인 버튼 클릭 시 실행
+                    onPressed: () => handleLogin(context),
                     child: const Text(
                       "Login",
                       style: TextStyle(fontSize: 16),

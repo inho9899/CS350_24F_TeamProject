@@ -8,7 +8,16 @@ import 'missed_medicine_screen.dart'; // 약 복용 관련 화면
 import 'outdoor_alert_screen.dart'; // 외출 알림 화면
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final String name;
+  final bool elderly;
+  final String token;
+
+  const HomeScreen({
+    Key? key,
+    required this.name,
+    required this.elderly,
+    required this.token,
+  }) : super(key: key);
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -26,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void setupFCM() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-    // 알림 권한 요청 (Android에서는 기본적으로 허용됨)
+    // 알림 권한 요청
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       badge: true,
@@ -138,9 +147,19 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Welcome, Nupjuk!",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                "Welcome, ${widget.name}!",
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "User Type: ${widget.elderly ? 'Elderly' : 'Caregiver'}",
+                style: const TextStyle(fontSize: 18),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Access Token: ${widget.token}",
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 20),
               // Person A 정보 카드
@@ -149,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const DetailScreen(personName: "Person A"),
+                      builder: (context) => DetailScreen(personName: "Person A"),
                     ),
                   );
                 },
@@ -178,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const DetailScreen(personName: "Person B"),
+                      builder: (context) => DetailScreen(personName: "Person B"),
                     ),
                   );
                 },
@@ -215,7 +234,13 @@ class _HomeScreenState extends State<HomeScreen> {
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const UserScreen()),
+              MaterialPageRoute(
+                builder: (context) => UserScreen(
+                  name: widget.name,
+                  elderly: widget.elderly,
+                  token: widget.token,
+                ),
+              ),
             );
           }
           setState(() {
