@@ -22,6 +22,7 @@ class HeartGraph extends StatefulWidget {
 class _HeartGraphState extends State<HeartGraph> {
   List<FlSpot> heartRateData = []; // 그래프 데이터
   bool isLoading = true; // 로딩 상태 확인
+  List<String> xLabels = []; // X축 라벨
 
   @override
   void initState() {
@@ -49,18 +50,32 @@ class _HeartGraphState extends State<HeartGraph> {
         final data = jsonDecode(response.body);
         final List<dynamic> times = data['time'] ?? [];
         final List<dynamic> values = data['heartRate'] ?? [];
-        List<FlSpot> spots = [];
 
-        for (int i = 0; i < times.length; i++) {
-          // x축은 시간차 (분), y축은 심박수
-          final DateTime time = DateTime.parse(times[i]);
-          final double xValue = time.difference(DateTime.now()).inMinutes.toDouble();
-          final double yValue = values[i].toDouble();
+        // 데이터 정렬
+        List<Map<String, dynamic>> dataPoints = List.generate(
+          times.length,
+              (index) => {
+            "time": DateTime.parse(times[index]),
+            "value": values[index].toDouble(),
+          },
+        );
+
+        dataPoints.sort((a, b) => a["time"].compareTo(b["time"])); // 시간 기준으로 정렬
+
+        List<FlSpot> spots = [];
+        List<String> labels = [];
+
+        for (int i = 0; i < dataPoints.length; i++) {
+          final DateTime time = dataPoints[i]["time"];
+          final double xValue = i.toDouble(); // 순차적인 x값
+          final double yValue = dataPoints[i]["value"];
           spots.add(FlSpot(xValue, yValue));
+          labels.add("${time.hour}:${time.minute.toString().padLeft(2, '0')}"); // 시간 형식
         }
 
         setState(() {
           heartRateData = spots;
+          xLabels = labels;
           isLoading = false;
         });
       } else {
@@ -118,13 +133,9 @@ class _HeartGraphState extends State<HeartGraph> {
               width: 350,
               child: LineChart(
                 LineChartData(
-                  maxY: heartRateData.isEmpty ? 100 : null,
-                  minY: heartRateData.isEmpty ? 60 : null,
                   lineBarsData: [
                     LineChartBarData(
-                      spots: heartRateData.isEmpty
-                          ? [FlSpot(0, 0)] // const 제거
-                          : heartRateData,
+                      spots: heartRateData,
                       isCurved: true,
                       colors: [Colors.red],
                       barWidth: 4,
@@ -143,8 +154,9 @@ class _HeartGraphState extends State<HeartGraph> {
                         fontSize: 12,
                       ),
                       getTitles: (value) {
-                        if (value % 10 == 0) {
-                          return '${value.toInt()}m';
+                        if (value.toInt() >= 0 &&
+                            value.toInt() < xLabels.length) {
+                          return xLabels[value.toInt()]; // 시간 표시
                         }
                         return '';
                       },
@@ -168,7 +180,7 @@ class _HeartGraphState extends State<HeartGraph> {
                   ),
                   gridData: FlGridData(
                     show: true,
-                    horizontalInterval: 20,
+                    horizontalInterval: 10, // 심박수 간격
                   ),
                   borderData: FlBorderData(
                     show: true,
