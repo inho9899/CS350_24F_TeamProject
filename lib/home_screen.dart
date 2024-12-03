@@ -8,6 +8,9 @@ import 'detail_screen.dart'; // 상세정보 화면 (각 사용자 정보)
 import 'low_heart_rate_screen.dart'; // 심박수 관련 화면
 import 'missed_medicine_screen.dart'; // 약 복용 관련 화면
 import 'outdoor_alert_screen.dart'; // 외출 알림 화면
+import 'package:pedometer/pedometer.dart'; // 걸음 수 측정을 위한 라이브러리
+import 'dart:async';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends StatefulWidget {
   final String name;
@@ -28,12 +31,23 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 1; // 현재 네비게이션 바 인덱스 (1: HomeScreen)
   List<Map<String, dynamic>> elderlyList = []; // Elder 정보를 저장
+  int stepCount = 0; // 걸음 수 저장
+  late DateTime lastResetTime; // 마지막 리셋 시간 저장
+  late Stream<StepCount> _stepCountStream; // 걸음 수 스트림 저장
+  late Timer _timer; // 5분마다 실행할 타이머
 
   @override
   void initState() {
     super.initState();
     setupFCM();
     fetchElderlyInfo();
+    print(widget.elderly);
+    if (widget.elderly) {
+      requestActivityRecognitionPermission();
+      startStepTracking();
+      lastResetTime = DateTime.now();
+      startStepTrackingTimer(); // 타이머 시작
+    }
   }
 
   void setupFCM() async {
@@ -143,13 +157,61 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context) => OutdoorAlertScreen(personName: personName),
         ),
       );
+    }
+  }
+
+  Future<void> requestActivityRecognitionPermission() async {
+    PermissionStatus status = await Permission.activityRecognition.request();
+
+    if (status.isGranted) {
+      // 권한이 허용되면 걸음 수 추적 시작
+      startStepTracking();
     } else {
-      /*Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DetailScreen(personName: personName),
-        ),
-      );*/
+      // 권한 거부 시 처리 (알림 등)
+      print("Activity Recognition 권한이 거부되었습니다.");
+    }
+  }
+
+  // 걸음 수 추적 및 서버로 전송
+  void startStepTracking() {
+    _stepCountStream = Pedometer.stepCountStream; // 걸음 수 스트림 설정
+    _stepCountStream.listen((StepCount step) {
+      setState(() {
+        stepCount = step.steps;
+      });
+    });
+  }
+
+  void startStepTrackingTimer() {
+    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
+      sendStepDataToServer(); // 5분마다 걸음 수 전송
+    });
+  }
+
+  Future<void> sendStepDataToServer() async {
+    final String currentTime = DateTime.now().toString();
+    final Uri url = Uri.parse('http://121.152.208.156:3000/elderly/walking');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${widget.token}",
+        },
+        body: json.encode({
+          "time": currentTime,
+          "walk": stepCount,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("걸음 수 데이터 전송 성공");
+      } else {
+        print("걸음 수 데이터 전송 실패: ${response.body}");
+      }
+    } catch (e) {
+      print("걸음 수 데이터 전송 중 오류 발생: $e");
     }
   }
 
