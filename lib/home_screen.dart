@@ -135,26 +135,29 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateToDetailPage(Map<String, dynamic> data) {
     final type = data['type']; // 알림 유형
     final personName = data['personName'] ?? 'Unknown'; // 사용자 이름 기본값
+    final phone = data['phone'] ?? 'Null';
+    final value = data['value'] ?? 'Null';
+    final time = data['time'] ?? 'Null' ;
 
     if (type == 'low_heart_rate') {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => LowHeartRateScreen(personName: personName),
+          builder: (context) => LowHeartRateScreen(personName: personName, phone: phone, value: value, time: time),
         ),
       );
     } else if (type == 'missed_medicine') {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => MissedMedicineScreen(personName: personName),
+          builder: (context) => MissedMedicineScreen(personName: personName, phone: phone, time: time),
         ),
       );
     } else if (type == 'outdoor_alert') {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => OutdoorAlertScreen(personName: personName),
+          builder: (context) => OutdoorAlertScreen(personName: personName, phone: phone, time: time),
         ),
       );
     }
