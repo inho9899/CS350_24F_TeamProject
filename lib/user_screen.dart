@@ -140,13 +140,6 @@ class UserScreen extends StatelessWidget {
                               "User Type: ${elderly ? 'Elderly' : 'Caregiver'}",
                               style: const TextStyle(color: Colors.grey),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Token: $token",
-                              style: const TextStyle(color: Colors.grey),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
                           ],
                         ),
                       ),

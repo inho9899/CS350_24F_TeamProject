@@ -148,30 +148,35 @@ class _DetailScreenState extends State<DetailScreen> {
                 elevation: 2,
                 child: ListTile(
                   leading: Image.asset('assets/medicine_icon.png', width: 40), // 아이콘
-                  title: Text("Morning: ${sensorData['medicine']?[0] ?? 'N/A'}"),
-                  subtitle: Text("Afternoon: ${sensorData['medicine']?[1] ?? 'N/A'}"),
+                  title: Text(
+                    sensorData['medicine'] != null && sensorData['medicine']!.isNotEmpty
+                        ? "Last Taken: ${sensorData['medicine']?[0] ?? 'N/A'}"
+                        : "No medication data available",
+                  ),
                 ),
               ),
+
               const SizedBox(height: 20),
 
               // 상태 카드: Outdoor
-              Card(
-                elevation: 2,
-                child: ListTile(
-                  leading: Image.asset('assets/home_icon.png', width: 40), // 아이콘
-                  title: Text(
-                    sensorData['outdoor'] != null && sensorData['outdoor']!.isNotEmpty
-                        ? "Last Update: ${sensorData['outdoor']?[0]}"
-                        : "N/A",
-                  ),
-                  subtitle: Text(
-                    sensorData['outdoor'] != null && sensorData['outdoor']!.isNotEmpty
-                        ? "Status: ${sensorData['outdoor']?[1]}"
-                        : "No outdoor data available",
-                  ),
-                ),
+          Card(
+            elevation: 2,
+            child: ListTile(
+              leading: Image.asset('assets/home_icon.png', width: 40), // 아이콘
+              title: Text(
+                sensorData['outdoor'] != null && sensorData['outdoor']!.length > 1
+                    ? (sensorData['outdoor']?[1] == 0
+                    ? "Status: Home\n"
+                    : sensorData['outdoor']?[1] == 1
+                    ? "Status: Outside\n"
+                    : "Status: Unknown\n") +
+                    "Last Update: ${sensorData['outdoor']?[0]}"
+                    : "No outdoor data available",
               ),
-            ],
+            ),
+          )
+
+          ],
           ),
         ),
       ),

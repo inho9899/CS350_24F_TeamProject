@@ -251,11 +251,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: const TextStyle(fontSize: 18),
               ),
               const SizedBox(height: 20),
-              Text(
-                "Access Token: ${widget.token}",
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
               const Text(
                 "Elderly List:",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
