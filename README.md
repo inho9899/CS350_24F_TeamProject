@@ -2,6 +2,8 @@
 
 SmartSpark is a comprehensive health monitoring mobile application built with Flutter, designed to help caregivers monitor elderly users' health status in real-time through various sensors and smart notifications. The application leverages **IoT (Internet of Things) technology** to connect wearable devices and smart sensors for continuous health data collection and analysis.
 
+<br>
+
 ## 📱 Project Overview
 
 SmartSpark provides a dual-user system connecting caregivers with elderly users to ensure continuous health monitoring and emergency response capabilities. The application integrates with **IoT sensors and devices** to track vital signs, medication schedules, physical activity, and provides real-time alerts for health emergencies through connected smart home systems.
@@ -29,6 +31,8 @@ SmartSpark provides a dual-user system connecting caregivers with elderly users 
 </div>
 
 *Screenshots showing the main features: Authentication flow, health monitoring dashboard, real-time graphs, and emergency alert systems*
+
+<br>
 
 ### Key Features
 
@@ -69,6 +73,8 @@ SmartSpark provides a dual-user system connecting caregivers with elderly users 
 - Location-based outdoor alerts
 - Health emergency detection
 
+<br>
+
 ## 🏗️ Technical Architecture
 
 ### IoT Integration Layer
@@ -108,6 +114,8 @@ dependencies:
 ```
 
 
+<br>
+
 ## 📱 Application Screens
 
 ### Authentication Flow
@@ -126,6 +134,8 @@ dependencies:
 - **Low Heart Rate Screen**: Emergency alert interface
 - **Missed Medicine Screen**: Medication reminder notifications
 - **Outdoor Alert Screen**: Location-based safety notifications
+
+<br>
 
 ## 🔧 Configuration
 
@@ -146,6 +156,8 @@ The application connects to the following backend endpoints:
 - **Notifications**: For health alerts
 - **Internet**: For API communication
 
+<br>
+
 ## 🎯 User Roles
 
 ### Caregiver
@@ -162,6 +174,8 @@ The application connects to the following backend endpoints:
 - Emergency assistance access
 - Health data privacy controls
 
+<br>
+
 ## 🔒 Security Features
 
 - JWT-based authentication
@@ -169,6 +183,8 @@ The application connects to the following backend endpoints:
 - Encrypted token storage
 - Role-based access control
 - Privacy-focused data handling
+
+<br>
 
 ## 📈 Monitoring Capabilities
 
@@ -178,6 +194,8 @@ The application connects to the following backend endpoints:
 - Medication adherence monitoring
 - Emergency response times
 - Location-based safety alerts
+
+<br>
 
 ## 🌐 IoT Features & Capabilities
 
@@ -208,6 +226,8 @@ The application connects to the following backend endpoints:
 - Low activity warnings from wearable devices
 - Emergency contact activation through panic buttons
 
+<br>
+
 ## 🛠️ Development
 
 ### Project Structure
@@ -230,16 +250,21 @@ lib/
 └── outdoor_alert_screen.dart   # Safety notifications
 ```
 
+<br>
+
 ## 📝 Documentation
 
 - **SRS Document**: Software Requirements Specification
 - **SDD Document**: Software Design Document
 - **API Documentation**: Backend integration guide
 
+<br>
 
 ## 📄 License
 
 This project is part of CS350 (Introduction to Software Engineering) term project.
+
+<br>
 
 ## 👥 Team SmartSpark
 
